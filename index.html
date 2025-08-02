@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EINS - Digitale Meditation</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#000000">
+    <meta name="background-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="EINS">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="EINS">
+    
+    <!-- Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Favicon und Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512x512.png">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            cursor: none;
+            /* Verhindert Scrollen und Zoomen auf mobilen Geräten */
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+        }
+
+        .center-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100px;
+            height: 100px;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            z-index: 10;
+            animation: pulse 3s ease-in-out infinite;
+            pointer-events: none;
+            transition: opacity 2s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% { 
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+            50% { 
+                transform: translate(-50%, -50%) scale(1.2);
+                opacity: 0.7;
+            }
+        }
+
+        .title {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2rem;
+            font-weight: bold;
+            z-index: 10;
+            opacity: 0.8;
+            letter-spacing: 0.5em;
+            transition: opacity 2s ease-in-out;
+        }
+
+        .binary-text {
+            position: absolute;
+            font-size: 0.8rem;
+            color: #333;
+            z-index: 2;
+            user-select: none;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #fff;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .info {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            z-index: 10;
+            opacity: 0.6;
+            font-size: 0.9rem;
+            transition: opacity 2s ease-in-out;
+        }
+
+        .credit {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 10;
+            opacity: 0.5;
+            font-size: 0.8rem;
+            transition: opacity 2s ease-in-out;
+        }
+
+        .interaction-hint {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 10;
+            opacity: 0.3;
+            font-size: 1rem;
+            pointer-events: none;
+            animation: fadeInOut 4s ease-in-out infinite;
+            transition: opacity 2s ease-in-out;
+        }
+
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0.1; }
+            50% { opacity: 0.4; }
+        }
+
+        .counter {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            font-weight: bold;
+            z-index: 8;
+            opacity: 0.9;
+            pointer-events: none;
+            transition: opacity 2s ease-in-out;
+        }
+
+        .binary-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 3;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div class="binary-grid" id="binary-grid"></div>
+    
+    <div class="title">EINS</div>
+    <div class="center-circle"></div>
+    <div class="counter" id="counter">1</div>
+    <div class="interaction-hint">Bewege die Maus</div>
+    
+    <div class="info">
+        Eine digitale Meditation über Einheit und Vielfalt<br>
+        Jede Interaktion erzeugt neue "Einsen"
+    </div>
+    
+    <div class="credit">
+        benyhill.cc
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const counter = document.getElementById('counter');
+        const binaryGrid = document.getElementById('binary-grid');
+        
+        let mouseX = 0;
+        let mouseY = 0;
+        let particles = [];
+        let interactionCount = 0;
+        let binarySpread = 0; // 0-1, wie viel vom Bildschirm mit Binär gefüllt ist
+        let gridSize = 40; // Größe der Binär-Zellen
+        let fadeStartThreshold = 100; // Wann die Elemente zu verblassen beginnen
+        let fadeCompleteThreshold = 300; // Wann sie komplett verschwunden sind
+        
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(registration => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch(registrationError => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+        
+        // Canvas Setup
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        
+        // Binary Grid System
+        function createBinaryGrid() {
+            const cols = Math.ceil(canvas.width / gridSize);
+            const rows = Math.ceil(canvas.height / gridSize);
+            
+            binaryGrid.innerHTML = '';
+            
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    const cell = document.createElement('div');
+                    cell.style.position = 'absolute';
+                    cell.style.left = col * gridSize + 'px';
+                    cell.style.top = row * gridSize + 'px';
+                    cell.style.width = gridSize + 'px';
+                    cell.style.height = gridSize + 'px';
+                    cell.style.display = 'flex';
+                    cell.style.alignItems = 'center';
+                    cell.style.justifyContent = 'center';
+                    cell.style.fontSize = '24px';
+                    cell.style.color = '#fff';
+                    cell.style.fontFamily = 'Courier New, monospace';
+                    cell.style.fontWeight = 'bold';
+                    
+                    // Berechne, ob diese Zelle sichtbar sein soll basierend auf binarySpread
+                    const distanceFromTopRight = Math.sqrt(
+                        Math.pow(col - cols, 2) + Math.pow(row, 2)
+                    );
+                    const maxDistance = Math.sqrt(cols * cols + rows * rows);
+                    const spreadThreshold = maxDistance * binarySpread;
+                    
+                    if (distanceFromTopRight <= spreadThreshold) {
+                        cell.textContent = Math.random() > 0.5 ? '1' : '0';
+                        cell.style.opacity = '0.8';
+                    } else {
+                        cell.style.opacity = '0';
+                    }
+                    
+                    binaryGrid.appendChild(cell);
+                }
+            }
+        }
+        
+        // Mouse Tracking
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            
+            // Create particle trail
+            if (Math.random() < 0.3) {
+                createParticle(mouseX, mouseY);
+            }
+            
+            // Update counter and spread
+            interactionCount++;
+            counter.textContent = interactionCount;
+            
+            // Update binary spread
+            binarySpread = Math.min(1, interactionCount / 1000);
+            
+            // Update UI elements opacity
+            updateUIOpacity();
+            
+            // Recreate binary grid
+            createBinaryGrid();
+        });
+        
+        // Click interaction
+        document.addEventListener('click', (e) => {
+            createParticleExplosion(e.clientX, e.clientY);
+            interactionCount += 10;
+            counter.textContent = interactionCount;
+            
+            binarySpread = Math.min(1, interactionCount / 1000);
+            updateUIOpacity();
+            createBinaryGrid();
+        });
+        
+        // Update UI opacity based on interaction count
+        function updateUIOpacity() {
+            const progress = Math.min(1, (interactionCount - fadeStartThreshold) / (fadeCompleteThreshold - fadeStartThreshold));
+            const opacity = Math.max(0, 1 - progress);
+            
+            document.querySelector('.counter').style.opacity = opacity;
+            document.querySelector('.center-circle').style.opacity = opacity;
+            document.querySelector('.title').style.opacity = opacity * 0.8;
+            document.querySelector('.info').style.opacity = opacity * 0.6;
+            document.querySelector('.credit').style.opacity = opacity * 0.5;
+            document.querySelector('.interaction-hint').style.opacity = opacity * 0.3;
+        }
+        
+        // Particle System
+        function createParticle(x, y) {
+            particles.push({
+                x: x,
+                y: y,
+                vx: (Math.random() - 0.5) * 2,
+                vy: (Math.random() - 0.5) * 2,
+                life: 1,
+                decay: 0.02
+            });
+        }
+        
+        function createParticleExplosion(x, y) {
+            for (let i = 0; i < 20; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 8,
+                    vy: (Math.random() - 0.5) * 8,
+                    life: 1,
+                    decay: 0.01
+                });
+            }
+        }
+        
+        // Animation Loop
+        function animate() {
+            // Clear canvas
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Update and draw particles
+            particles.forEach((particle, index) => {
+                particle.x += particle.vx;
+                particle.y += particle.vy;
+                particle.life -= particle.decay;
+                
+                if (particle.life <= 0) {
+                    particles.splice(index, 1);
+                } else {
+                    ctx.fillStyle = `rgba(255, 255, 255, ${particle.life})`;
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+            
+            // Draw connection lines to center (only if counter is still visible)
+            if (interactionCount < fadeStartThreshold) {
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                ctx.lineWidth = 1;
+                particles.forEach(particle => {
+                    if (particle.life > 0.5) {
+                        ctx.beginPath();
+                        ctx.moveTo(canvas.width / 2, canvas.height / 2);
+                        ctx.lineTo(particle.x, particle.y);
+                        ctx.stroke();
+                    }
+                });
+            }
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // Start animation
+        animate();
+        
+        // Initialize binary grid
+        createBinaryGrid();
+        
+        // Keyboard interaction
+        document.addEventListener('keydown', (e) => {
+            if (e.key === ' ') {
+                createParticleExplosion(canvas.width / 2, canvas.height / 2);
+                interactionCount += 50;
+                counter.textContent = interactionCount;
+                
+                binarySpread = Math.min(1, interactionCount / 1000);
+                updateUIOpacity();
+                createBinaryGrid();
+            }
+        });
+        
+        // Touch support for mobile - enhanced for PWA
+        document.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            mouseX = touch.clientX;
+            mouseY = touch.clientY;
+            
+            if (Math.random() < 0.5) {
+                createParticle(mouseX, mouseY);
+            }
+            
+            interactionCount++;
+            counter.textContent = interactionCount;
+            
+            binarySpread = Math.min(1, interactionCount / 1000);
+            updateUIOpacity();
+            createBinaryGrid();
+        }, { passive: false });
+        
+        document.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            createParticleExplosion(touch.clientX, touch.clientY);
+            interactionCount += 10;
+            counter.textContent = interactionCount;
+            
+            binarySpread = Math.min(1, interactionCount / 1000);
+            updateUIOpacity();
+            createBinaryGrid();
+        }, { passive: false });
+        
+        // Prevent context menu on long press
+        document.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+        
+        // Handle orientation changes
+        window.addEventListener('orientationchange', () => {
+            setTimeout(resizeCanvas, 100);
+        });
+    </script>
+</body>
+</html>
