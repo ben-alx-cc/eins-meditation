@@ -2,13 +2,13 @@
   "name": "EINS - Digitale Meditation",
   "short_name": "EINS",
   "description": "Eine digitale Meditation über Einheit und Vielfalt",
-  "start_url": "/",
+  "start_url": "/eins-meditation/",
   "display": "fullscreen",
   "orientation": "any",
   "theme_color": "#000000",
   "background_color": "#000000",
   "lang": "de",
-  "scope": "/",
+  "scope": "/eins-meditation/",
   "icons": [
     {
       "src": "icons/icon-72x72.png",

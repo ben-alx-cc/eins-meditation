@@ -1,16 +1,16 @@
-const CACHE_NAME = 'eins-meditation-v1.0.0';
+const CACHE_NAME = 'eins-meditation-v1.0.1';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icons/icon-72x72.png',
-  '/icons/icon-96x96.png',
-  '/icons/icon-128x128.png',
-  '/icons/icon-144x144.png',
-  '/icons/icon-152x152.png',
-  '/icons/icon-192x192.png',
-  '/icons/icon-384x384.png',
-  '/icons/icon-512x512.png'
+  '/eins-meditation/',
+  '/eins-meditation/index.html',
+  '/eins-meditation/manifest.json',
+  '/eins-meditation/icons/icon-72x72.png',
+  '/eins-meditation/icons/icon-96x96.png',
+  '/eins-meditation/icons/icon-128x128.png',
+  '/eins-meditation/icons/icon-144x144.png',
+  '/eins-meditation/icons/icon-152x152.png',
+  '/eins-meditation/icons/icon-192x192.png',
+  '/eins-meditation/icons/icon-384x384.png',
+  '/eins-meditation/icons/icon-512x512.png'
 ];
 
 // Installation des Service Workers
@@ -86,7 +86,7 @@ self.addEventListener('fetch', (event) => {
         }).catch(() => {
           // Network failed - return cached version if available
           console.log('[ServiceWorker] Netzwerkfehler, Fallback auf Cache');
-          return caches.match('/index.html');
+          return caches.match('/eins-meditation/index.html');
         });
       })
   );
