@@ -1,94 +1,52 @@
-const CACHE_NAME = 'eins-meditation-v1.0.1';
-const urlsToCache = [
-  '/eins-meditation/',
-  '/eins-meditation/index.html',
-  '/eins-meditation/manifest.json',
-  '/eins-meditation/icons/icon-72x72.png',
-  '/eins-meditation/icons/icon-96x96.png',
-  '/eins-meditation/icons/icon-128x128.png',
-  '/eins-meditation/icons/icon-144x144.png',
-  '/eins-meditation/icons/icon-152x152.png',
-  '/eins-meditation/icons/icon-192x192.png',
-  '/eins-meditation/icons/icon-384x384.png',
-  '/eins-meditation/icons/icon-512x512.png'
+const CACHE_NAME = 'abstract-play-v1.0.0';
+const ASSETS = [
+  './',
+  './index.html',
+  './style.css',
+  './script.js',
+  './manifest.json',
+  './icons/icon-72x72.png',
+  './icons/icon-96x96.png',
+  './icons/icon-128x128.png',
+  './icons/icon-144x144.png',
+  './icons/icon-152x152.png',
+  './icons/icon-192x192.png',
+  './icons/icon-384x384.png',
+  './icons/icon-512x512.png'
 ];
 
 // Installation des Service Workers
 self.addEventListener('install', (event) => {
-  console.log('[ServiceWorker] Installation');
+  const scope = (self.registration && self.registration.scope) || self.location.origin + '/';
+  const toCache = ASSETS.map(p => new URL(p, scope).toString());
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('[ServiceWorker] Dateien werden gecacht');
-        return cache.addAll(urlsToCache);
-      })
-      .then(() => {
-        // Forciert den neuen Service Worker sofort zu aktivieren
-        return self.skipWaiting();
-      })
+      .then(cache => cache.addAll(toCache))
+      .then(() => self.skipWaiting())
   );
 });
 
 // Aktivierung des Service Workers
 self.addEventListener('activate', (event) => {
-  console.log('[ServiceWorker] Aktivierung');
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          // Lösche alte Caches
-          if (cacheName !== CACHE_NAME) {
-            console.log('[ServiceWorker] Alter Cache wird gelöscht:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    }).then(() => {
-      // Übernimmt die Kontrolle über alle Clients sofort
-      return self.clients.claim();
-    })
+    caches.keys().then(keys => Promise.all(keys.map(k => k !== CACHE_NAME && caches.delete(k))))
+      .then(() => self.clients.claim())
   );
 });
 
 // Fetch Events abfangen für Offline-Funktionalität
 self.addEventListener('fetch', (event) => {
-  // Nur GET-Requests cachen
-  if (event.request.method !== 'GET') {
-    return;
-  }
-
+  if (event.request.method !== 'GET') return;
   event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Cache hit - return response
-        if (response) {
-          console.log('[ServiceWorker] Datei aus Cache geladen:', event.request.url);
-          return response;
-        }
-
-        // Cache miss - fetch from network
-        return fetch(event.request).then((response) => {
-          // Prüfe ob wir eine gültige Response erhalten haben
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
-          }
-
-          // Clone die Response da sie nur einmal verwendet werden kann
-          const responseToCache = response.clone();
-
-          caches.open(CACHE_NAME)
-            .then((cache) => {
-              console.log('[ServiceWorker] Neue Datei gecacht:', event.request.url);
-              cache.put(event.request, responseToCache);
-            });
-
-          return response;
-        }).catch(() => {
-          // Network failed - return cached version if available
-          console.log('[ServiceWorker] Netzwerkfehler, Fallback auf Cache');
-          return caches.match('/eins-meditation/index.html');
-        });
-      })
+    caches.match(event.request).then(cached => {
+      if (cached) return cached;
+      return fetch(event.request).then(resp => {
+        if (!resp || resp.status !== 200 || resp.type === 'opaque') return resp;
+        const copy = resp.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
+        return resp;
+      }).catch(() => caches.match('./index.html'));
+    })
   );
 });
 
@@ -105,59 +63,10 @@ self.addEventListener('sync', (event) => {
 });
 
 // Push Notifications (für zukünftige Features)
-self.addEventListener('push', (event) => {
-  console.log('[ServiceWorker] Push Notification empfangen');
-  
-  const options = {
-    body: 'Zeit für eine neue Meditation',
-    icon: '/icons/icon-192x192.png',
-    badge: '/icons/icon-72x72.png',
-    vibrate: [100, 50, 100],
-    data: {
-      dateOfArrival: Date.now(),
-      primaryKey: 1
-    },
-    actions: [
-      {
-        action: 'explore',
-        title: 'Meditation starten',
-        icon: '/icons/icon-192x192.png'
-      },
-      {
-        action: 'close',
-        title: 'Später',
-        icon: '/icons/icon-192x192.png'
-      }
-    ]
-  };
-
-  event.waitUntil(
-    self.registration.showNotification('EINS Meditation', options)
-  );
-});
+// (Optional) Push/Sync Features entfernt für Minimalismus
 
 // Notification Click Handler
-self.addEventListener('notificationclick', (event) => {
-  console.log('[ServiceWorker] Notification click:', event.action);
-  
-  event.notification.close();
-
-  if (event.action === 'explore') {
-    // Öffne oder fokussiere die App
-    event.waitUntil(
-      clients.matchAll({ type: 'window' }).then((clientList) => {
-        for (const client of clientList) {
-          if (client.url === '/' && 'focus' in client) {
-            return client.focus();
-          }
-        }
-        if (clients.openWindow) {
-          return clients.openWindow('/');
-        }
-      })
-    );
-  }
-});
+// (Optional) Notification Handling entfernt
 
 // Message Handler für Kommunikation mit dem Main Thread
 self.addEventListener('message', (event) => {

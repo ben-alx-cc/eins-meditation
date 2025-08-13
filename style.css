@@ -1,0 +1,87 @@
+/* Basquiat-inspirierte Vollbild-CSS, mobil-optimiert */
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: #000;
+  color: #fff;
+  overflow: hidden;
+  -webkit-touch-callout: none;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body, * {
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+#scene {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  display: block;
+}
+
+/* Start-Gate für Audio/Bewegung */
+.gate {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.92);
+  display: grid;
+  place-items: center;
+  z-index: 10;
+  transition: opacity 400ms ease;
+}
+
+.gate--hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.gate__inner {
+  display: grid;
+  place-items: center;
+  gap: 14px;
+  padding: 24px 28px;
+  border: 2px dashed #fff;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.25);
+}
+
+.gate__dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ff004d; /* kräftiger Akzent */
+  box-shadow: 0 0 18px rgba(255, 0, 77, 0.9);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+.gate__text {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: 0.4px;
+  text-align: center;
+  color: #fff;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.35); opacity: 0.65; }
+}
+
+/* iOS Safe Areas */
+:root {
+  --safe-top: env(safe-area-inset-top);
+  --safe-right: env(safe-area-inset-right);
+  --safe-bottom: env(safe-area-inset-bottom);
+  --safe-left: env(safe-area-inset-left);
+}
+
+.gate__inner { margin: calc(var(--safe-top) + 0px) calc(var(--safe-right) + 0px) calc(var(--safe-bottom) + 0px) calc(var(--safe-left) + 0px); }
+

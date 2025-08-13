@@ -1,14 +1,14 @@
 {
-  "name": "EINS - Digitale Meditation",
-  "short_name": "EINS",
-  "description": "Eine digitale Meditation über Einheit und Vielfalt",
-  "start_url": "/eins-meditation/",
+  "name": "Abstract Play",
+  "short_name": "Abstract",
+  "description": "Eine spielerische, abstrakte Leinwand im Basquiat-Geist",
+  "start_url": ".",
   "display": "fullscreen",
   "orientation": "any",
   "theme_color": "#000000",
   "background_color": "#000000",
   "lang": "de",
-  "scope": "/eins-meditation/",
+  "scope": ".",
   "icons": [
     {
       "src": "icons/icon-72x72.png",
@@ -59,13 +59,13 @@
       "purpose": "maskable any"
     }
   ],
-  "categories": ["wellness", "meditation", "lifestyle"],
+  "categories": ["art", "design", "play"],
   "shortcuts": [
     {
-      "name": "Mediation starten",
-      "short_name": "Starten",
-      "description": "Direkt zur Meditation",
-      "url": "/",
+      "name": "Start",
+      "short_name": "Start",
+      "description": "Starte die Leinwand",
+      "url": "./",
       "icons": [{ "src": "icons/icon-192x192.png", "sizes": "192x192" }]
     }
   ]
